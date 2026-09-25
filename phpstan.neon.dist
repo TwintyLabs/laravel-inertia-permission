@@ -6,5 +6,9 @@ parameters:
     paths:
         - src
         - config
-        - database
     tmpDir: build/phpstan
+    checkOctaneCompatibility: true
+    checkModelProperties: true
+    ignoreErrors:
+        - '#Class Spatie\\Permission\\Models\\Role not found#'
+        - '#Class Spatie\\Permission\\Models\\Permission not found#'
