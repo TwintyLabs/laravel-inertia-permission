@@ -1,7 +1,7 @@
 # Laravel Inertia Permission
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/TwintyLabs/laravel-inertia-permission.svg?style=flat-square)](https://packagist.org/packages/TwintyLabs/laravel-inertia-permission)
-[![GitHub Code Style Action Status](https://github.com/TwintyLabs/laravel-inertia-permission/actions/workflows/fix-php-code-style-issues.yml/badge.svg)](https://github.com/TwintyLabs/laravel-inertia-permission/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/TwintyLabs/laravel-inertia-permission/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/TwintyLabs/laravel-inertia-permission/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/TwintyLabs/laravel-inertia-permission.svg?style=flat-square)](https://packagist.org/packages/TwintyLabs/laravel-inertia-permission)
 
 Generate TypeScript types from [Spatie Laravel Permission](https://github.com/spatie/laravel-permission) for [Inertia.js](https://inertiajs.com) applications (React & Vue). This package automatically generates type-safe `Role` and `Permission` TypeScript types from your database, along with ready-to-use utils and hooks/composables for your frontend.
