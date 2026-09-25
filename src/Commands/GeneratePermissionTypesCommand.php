@@ -3,6 +3,7 @@
 namespace TwintyLabs\InertiaPermission\Commands;
 
 use Illuminate\Console\Command;
+use InvalidArgumentException;
 
 class GeneratePermissionTypesCommand extends Command
 {
@@ -20,13 +21,13 @@ class GeneratePermissionTypesCommand extends Command
         $roleModel = config('inertia-permission.role_model');
         $permissionModel = config('inertia-permission.permission_model');
 
-        if (! class_exists($roleModel)) {
+        if (! is_string($roleModel) || ! class_exists($roleModel)) {
             $this->error("Role model [{$roleModel}] not found.");
 
             return self::FAILURE;
         }
 
-        if (! class_exists($permissionModel)) {
+        if (! is_string($permissionModel) || ! class_exists($permissionModel)) {
             $this->error("Permission model [{$permissionModel}] not found.");
 
             return self::FAILURE;
@@ -48,22 +49,32 @@ class GeneratePermissionTypesCommand extends Command
         }
 
         $this->newLine();
-        $this->info("✅ Generated {$roles->count()} roles and {$permissions->count()} permissions.");
+
+        $this->info(
+            "✅ Generated {$roles->count()} roles and {$permissions->count()} permissions."
+        );
 
         return self::SUCCESS;
     }
 
     private function generateTypes($roles, $permissions): void
     {
-        $superAdminRole = config('inertia-permission.super_admin_role', 'Super Admin');
+        $superAdminRole = config(
+            'inertia-permission.super_admin_role',
+            'Super Admin'
+        );
 
         $roleTypes = $roles->isEmpty()
             ? '    never'
-            : $roles->map(fn ($r) => "    | '{$r}'")->join("\n");
+            : $roles->map(
+                fn ($role) => "    | '{$role}'"
+            )->join("\n");
 
         $permissionTypes = $permissions->isEmpty()
             ? '    never'
-            : $permissions->map(fn ($p) => "    | '{$p}'")->join("\n");
+            : $permissions->map(
+                fn ($permission) => "    | '{$permission}'"
+            )->join("\n");
 
         $content = <<<TS
         // ⚠️ AUTO-GENERATED — do not edit manually!
@@ -84,8 +95,16 @@ class GeneratePermissionTypesCommand extends Command
 
         $outputPath = config('inertia-permission.output_path');
 
-        if (! is_dir(dirname($outputPath))) {
-            mkdir(dirname($outputPath), 0755, true);
+        if (! is_string($outputPath)) {
+            throw new InvalidArgumentException(
+                'The inertia-permission.output_path configuration must be a string.'
+            );
+        }
+
+        $outputDirectory = dirname($outputPath);
+
+        if (! is_dir($outputDirectory)) {
+            mkdir($outputDirectory, 0755, true);
         }
 
         file_put_contents($outputPath, $content);
@@ -98,34 +117,66 @@ class GeneratePermissionTypesCommand extends Command
         $framework = $this->option('framework')
             ?? config('inertia-permission.framework', 'react');
 
-        if (! in_array($framework, ['react', 'vue'])) {
-            $this->error("Framework [{$framework}] not supported. Use 'react' or 'vue'.");
+        if (! is_string($framework)) {
+            $this->error('Framework configuration must be a string.');
+
+            return;
+        }
+
+        if (! in_array($framework, ['react', 'vue'], true)) {
+            $this->error(
+                "Framework [{$framework}] not supported. Use 'react' or 'vue'."
+            );
 
             return;
         }
 
         $stubs = config("inertia-permission.stubs.{$framework}");
+
+        if (! is_array($stubs)) {
+            $this->error(
+                "Stub configuration for framework [{$framework}] is invalid."
+            );
+
+            return;
+        }
+
         $stubsPath = __DIR__."/../../stubs/{$framework}";
-        $force = $this->option('force');
+        $force = (bool) $this->option('force');
 
         foreach ($stubs as $type => $destination) {
+            if (! is_string($type) || ! is_string($destination)) {
+                $this->error('Invalid stub configuration.');
+
+                return;
+            }
+
             $source = match ($type) {
                 'utils' => "{$stubsPath}/utils/role-permission.ts",
                 'hook' => "{$stubsPath}/hooks/use-role-permission.ts",
                 'composable' => "{$stubsPath}/composables/use-role-permission.ts",
+                default => throw new InvalidArgumentException(
+                    "Unsupported stub type [{$type}]."
+                ),
             };
 
-            if (! is_dir(dirname($destination))) {
-                mkdir(dirname($destination), 0755, true);
+            $destinationDirectory = dirname($destination);
+
+            if (! is_dir($destinationDirectory)) {
+                mkdir($destinationDirectory, 0755, true);
             }
 
             if (! $force && file_exists($destination)) {
-                $this->warn("  ⚠️  Skipped  → {$destination} (already exists, use --force to overwrite)");
+                $this->warn(
+                    "  ⚠️  Skipped  → {$destination} ".
+                    '(already exists, use --force to overwrite)'
+                );
 
                 continue;
             }
 
             copy($source, $destination);
+
             $this->line("  📄 Stub     → {$destination}");
         }
     }
